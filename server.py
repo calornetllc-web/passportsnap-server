@@ -19,7 +19,9 @@ app = Flask(__name__)
 CORS(app)
 
 print("Loading ISNet matting model (better for white clothing & hijabs)...")
-SESSION = new_session("isnet-general-use")
+# SESSION = new_session("isnet-general-use")
+# To this lightweight human portrait model:
+SESSION = new_session("silueta")
 print("Model loaded successfully!")
 
 
