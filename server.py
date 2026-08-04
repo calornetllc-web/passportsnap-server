@@ -1,7 +1,7 @@
 """
 PassportSnap AI — Cloud Background Removal Server
 =================================================
-Uses 'silueta' for lightweight, high-accuracy portrait detection.
+Uses 'isnet-general-use' (ISNet) for high-accuracy edge matting.
 """
 
 import io
@@ -17,8 +17,8 @@ PORT = int(os.environ.get("PORT", 5001))
 app = Flask(__name__)
 CORS(app)
 
-print("Loading Silueta portrait model...")
-SESSION = new_session("silueta")
+print("Loading ISNet matting model (isnet-general-use)...")
+SESSION = new_session("isnet-general-use")
 print("Model loaded successfully!")
 
 
@@ -30,6 +30,7 @@ def remove_bg():
     try:
         input_bytes = request.files["image"].read()
 
+        # ISNet natively outputs clean soft edges
         output_bytes = remove(
             input_bytes,
             session=SESSION,
@@ -43,7 +44,7 @@ def remove_bg():
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "engine": "rembg (silueta)"})
+    return jsonify({"status": "ok", "engine": "rembg (isnet-general-use)"})
 
 
 if __name__ == "__main__":
