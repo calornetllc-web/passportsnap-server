@@ -1,8 +1,6 @@
 """
 PassportSnap AI — Cloud Background Removal Server
-=================================================
-Uses 'isnet-general-use' (ISNet) with ONNX RAM optimization 
-to fit within Render's free 512 MB memory limit.
+Uses 'isnet-general-use' with ONNX RAM optimization.
 """
 
 import io
@@ -18,15 +16,15 @@ PORT = int(os.environ.get("PORT", 5001))
 app = Flask(__name__)
 CORS(app)
 
-print("Loading ISNet model with ONNX memory optimization...")
+print("Loading ISNet model (isnet-general-use)...")
 
-# Optimize ONNX Runtime RAM footprint to prevent exceeding 512 MB
+# Keep RAM footprint under 230 MB
 opts = ort.SessionOptions()
 opts.enable_cpu_mem_arena = False
 opts.intra_op_num_threads = 1
 
 SESSION = new_session("isnet-general-use", session_options=opts)
-print("ISNet Model loaded successfully within free RAM limits!")
+print("ISNet Model loaded successfully!")
 
 
 @app.route("/remove-bg", methods=["POST"])
@@ -50,7 +48,7 @@ def remove_bg():
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "engine": "rembg (isnet-general-use) - optimized"})
+    return jsonify({"status": "ok", "engine": "rembg (isnet-general-use)"})
 
 
 if __name__ == "__main__":
