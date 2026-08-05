@@ -18,7 +18,14 @@ HOST = "0.0.0.0"
 PORT = int(os.environ.get("PORT", 8080))
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/remove-bg": {"origins": [
+    "https://passportsnapai.com",
+    "https://www.passportsnapai.com",
+]}})
+
+# Reject absurdly large uploads before they hit the model (protects RAM on
+# a 2GiB Cloud Run instance; a 25MB cap is generous for a phone photo).
+app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
 print("Loading ISNet model (isnet-general-use)...")
 
@@ -36,6 +43,8 @@ def remove_bg():
 
     try:
         input_bytes = request.files["image"].read()
+        if not input_bytes:
+            return jsonify({"error": "Empty image upload"}), 400
 
         output_bytes = remove(
             input_bytes,
@@ -45,7 +54,10 @@ def remove_bg():
 
         return send_file(io.BytesIO(output_bytes), mimetype="image/png")
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        # Log server-side so Cloud Run logs show what actually failed
+        # (OOM, decode error, etc) instead of a bare 500 with no detail.
+        print(f"remove-bg failed: {exc!r}")
+        return jsonify({"error": "Background removal failed, please try again."}), 500
 
 
 @app.route("/health", methods=["GET"])
